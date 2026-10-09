@@ -1,0 +1,3 @@
+[submodule "vendor/windows-imaging-tools"]
+	path = vendor/windows-imaging-tools
+	url = https://github.com/cloudbase/windows-imaging-tools.git

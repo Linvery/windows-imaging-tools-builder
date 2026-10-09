@@ -1,0 +1,50 @@
+name: Windows PowerShell checks
+on:
+  push:
+  pull_request:
+jobs:
+  validate:
+    runs-on: windows-latest
+    env:
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.longpaths
+      GIT_CONFIG_VALUE_0: 'true'
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Initialize pinned dependency
+        run: .\Initialize-Project.ps1 -SkipSubmodules
+      - name: Test wizard and optional applications
+        run: .\tests\Test-Wizard.ps1
+      - name: Test environment checks and preflight
+        run: .\tests\Test-EnvironmentChecks.ps1
+      - name: Test build cancellation and resource ownership
+        run: .\tests\Test-BuildCancellation.ps1
+      - name: Test VirtIO resource extraction
+        run: .\tests\Test-VirtioResources.ps1
+      - name: Test Cloudbase-Init cache and image staging
+        run: .\tests\Test-CloudbaseInitResources.ps1
+      - name: Test installer signature policy
+        run: .\tests\Test-InstallerSignatures.ps1
+      - name: Test guest installation and reboot resume
+        run: .\tests\Test-GuestSoftware.ps1
+      - name: Test noninteractive specialize for client and server
+        run: .\tests\Test-Specialize.ps1
+      - name: Test unattended setup and Server 2025 setup keys
+        run: .\tests\Test-Unattend.ps1
+      - name: Test matching and manual product key choices
+        run: .\tests\Test-ProductKeys.ps1
+      - name: Test KMS server choices and guest configuration
+        run: .\tests\Test-KmsSettings.ps1
+      - name: Test optional first-boot Windows activation
+        run: .\tests\Test-WindowsActivation.ps1
+      - name: Test boot verification waits for Cloudbase-Init
+        run: .\tests\Test-BootVerification.ps1
+      - name: Reject malformed offline registry data
+        run: .\tests\Test-OfflineRegistry.ps1
+      - name: Check syntax, sanitization, and module import
+        run: .\tests\Test-Project.ps1

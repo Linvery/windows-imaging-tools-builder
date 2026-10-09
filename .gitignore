@@ -1,0 +1,28 @@
+# Local paths, transient build passwords, and run contexts
+/local/
+/data/*
+!/data/iso/
+!/data/custom-resources/
+/data/iso/*
+/data/custom-resources/*
+!/data/iso/.gitkeep
+!/data/custom-resources/.gitkeep
+# Machine-specific documentation
+/docs/migration.md
+/docs/validation.md
+/docs/history/
+__pycache__/
+*.pyc
+*.iso
+*.qcow2
+*.vhdx
+*.avhdx
+*.vmrs
+*.vmgs
+*.vmcx
+*.msi
+*.exe
+*.dll
+*.log
+*.transcript.txt
+/config/image.ini
