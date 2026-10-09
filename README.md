@@ -13,21 +13,8 @@
 - [Windows ADK](https://learn.microsoft.com/windows-hardware/get-started/adk-install) 的 Deployment Tools。
 
 使用管理员权限运行 Windows PowerShell 5.1。
-Deployment Tools 必须包含 `oscdimg.exe`。
-如果主机没有 Hyper-V 外部交换机，向导会询问是否创建。
 
-默认系统盘大小为 128 GiB。
-输出路径所在磁盘必须有至少 276 GiB 可用空间。
-
-将 Windows 安装 ISO 和 VirtIO ISO 放入项目的 `data/iso/` 目录。
-Windows 安装 ISO 必须包含 `sources/install.wim` 和 `sources/boot.wim`。
-在向导列出的 Windows 安装源中，输入编号选择安装源。
-VirtIO 驱动和工具会在构建时自动安装。
-
-也可以手动输入安装源路径。
-如果使用独立 WIM 文件，还需提供匹配的 Windows 安装 ISO。
-
-从以下地址下载资源：
+从以下地址下载资源，放入项目对应的文件夹中：
 
 | 资源 | 下载地址 | 示例文件名 | 应存放路径 |
 |---|---|---|---|
@@ -36,20 +23,13 @@ VirtIO 驱动和工具会在构建时自动安装。
 | Chrome Enterprise x64 MSI | [最新安装包](https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi) · [官方下载页](https://chromeenterprise.google/download/) | `googlechromestandaloneenterprise64.msi` | `data/custom-resources/` |
 | VS Code x64 系统安装包 | [Latest Stable](https://update.code.visualstudio.com/latest/win32-x64/stable) | `VSCodeSetup-x64-1.105.0.exe` | `data/custom-resources/` |
 
-将 Chrome 和 VS Code 安装包放入 `data/custom-resources/`，无需改名。
-可以分别选择是否安装 Chrome 和 VS Code。
-Chrome 和 VS Code 不限制版本，安装包须有有效的厂商签名。
-向导会提示选择安装包。
-选择预检或构建后，向导会准备 QEMU。
+将 Chrome 和 VS Code 安装包放入 `data/custom-resources/`，无需改名，可以分别选择是否安装 Chrome 和 VS Code。
 
 Cloudbase-Init 在首次构建时自动从官网下载，默认保存到 `data/assets/CloudbaseInitSetup_Stable_x64.msi`。
-使用其他资源目录时，安装包保存在该目录的 `assets/` 下。
-后续构建会复用已下载的有效安装包，无需再次下载。
-也可以提前将安装包放入这个目录，以便离线构建。
-清理临时资源时会保留已下载的安装包。
 需要更新 Cloudbase-Init 时，删除已保存的安装包后重新构建即可。
 
 ## 开始构建
+![示例图](example.png)
 
 将项目放在较短的路径。
 在管理员 Windows PowerShell 5.1 中运行以下命令：
@@ -66,7 +46,6 @@ Set-Location windows-imaging-tools-builder
 按提示选择安装源、Windows 版本、资源目录、Hyper-V 外部交换机、输出路径和软件。
 
 默认输出文件名为 `系统简称-yyyyMMddHHmm.qcow2`，例如 `WinServer2025-202610090241.qcow2`，也可以在向导中自行填写输出路径。
-命令行运行 `New-ImageConfig.ps1` 时，省略 `-OutputPath` 也会按所选 Windows 版本使用此命名规则。
 
 按回车可使用当前步骤的默认值。
 输入 `Q` 可取消向导。
@@ -89,6 +68,8 @@ Set-Location windows-imaging-tools-builder
 | 系统盘 | 128 GiB |
 
 如果主机资源不足，向导会降低 CPU 和内存的默认值。
+默认系统盘大小为 128 GiB，输出路径所在磁盘必须有至少 276 GiB 可用空间。
+
 构建按以下顺序执行：
 
 1. 安装驱动。
