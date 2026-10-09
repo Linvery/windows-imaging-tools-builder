@@ -22,34 +22,32 @@ Deployment Tools 必须包含 `oscdimg.exe`。
 将 Windows 安装 ISO 和 VirtIO ISO 放入项目的 `data/iso/` 目录。
 Windows 安装 ISO 必须包含 `sources/install.wim` 和 `sources/boot.wim`。
 在向导列出的 Windows 安装源中，输入编号选择安装源。
-向导会从 VirtIO ISO 提取 `virtio-win-guest-tools.exe`。
+VirtIO 驱动和工具会在构建时自动安装。
 
 也可以手动输入安装源路径。
 如果使用独立 WIM 文件，还需提供匹配的 Windows 安装 ISO。
 
 从以下地址下载资源：
 
-| 资源 | 下载地址 |
-|---|---|
-| Windows 安装 ISO | [Massgrave Genuine Installation Media](https://massgrave.dev/genuine-installation-media) |
-| VirtIO ISO | [Latest ISO](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/virtio-win.iso) · [Stable ISO](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso) |
-| Chrome Enterprise x64 MSI | [最新安装包](https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi) · [官方下载页](https://chromeenterprise.google/download/) |
-| VS Code x64 系统安装包 | [Latest Stable](https://update.code.visualstudio.com/latest/win32-x64/stable) |
+| 资源 | 下载地址 | 示例文件名 | 应存放路径 |
+|---|---|---|---|
+| Windows 安装 ISO | [Massgrave Genuine Installation Media](https://massgrave.dev/genuine-installation-media) | `Win11_25H2_Chinese_Simplified_x64.iso` | `data/iso/` |
+| VirtIO ISO | [Latest ISO](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/virtio-win.iso) · [Stable ISO](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso) | `virtio-win.iso` | `data/iso/` |
+| Chrome Enterprise x64 MSI | [最新安装包](https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi) · [官方下载页](https://chromeenterprise.google/download/) | `googlechromestandaloneenterprise64.msi` | `data/custom-resources/` |
+| VS Code x64 系统安装包 | [Latest Stable](https://update.code.visualstudio.com/latest/win32-x64/stable) | `VSCodeSetup-x64-1.105.0.exe` | `data/custom-resources/` |
 
 将 Chrome 和 VS Code 安装包放入 `data/custom-resources/`，无需改名。
 可以分别选择是否安装 Chrome 和 VS Code。
-项目只校验这两个安装包的有效厂商签名，不限制版本。
-项目只检查 VirtIO 安装包的文件名是否为 `virtio-win-guest-tools.exe`。
+Chrome 和 VS Code 不限制版本，安装包须有有效的厂商签名。
 向导会提示选择安装包。
 选择预检或构建后，向导会准备 QEMU。
 
 Cloudbase-Init 在首次构建时自动从官网下载，默认保存到 `data/assets/CloudbaseInitSetup_Stable_x64.msi`。
 使用其他资源目录时，安装包保存在该目录的 `assets/` 下。
-后续构建会验证并复用缓存，无需再次下载；下载失败或安装包无效时不会发布缓存。
+后续构建会复用已下载的有效安装包，无需再次下载。
 也可以提前将安装包放入这个目录，以便离线构建。
-模板使用 `__ASSET_ROOT__` 占位符，向导按实际资源目录生成路径，不依赖项目所在盘符或启动命令的当前目录。
-构建脚本会自动将缓存复制进镜像的 `UnattendResources/CloudbaseInit.msi`；临时资源清理会保留宿主机上的缓存。
-需要更新 Cloudbase-Init 时，删除缓存文件后重新构建即可。
+清理临时资源时会保留已下载的安装包。
+需要更新 Cloudbase-Init 时，删除已保存的安装包后重新构建即可。
 
 ## 开始构建
 
@@ -67,8 +65,7 @@ Set-Location windows-imaging-tools-builder
 如果缺少组件，向导会显示安装提示。
 按提示选择安装源、Windows 版本、资源目录、Hyper-V 外部交换机、输出路径和软件。
 
-默认输出文件名为 `系统简称-yyyyMMddHHmm.qcow2`，例如 `WinServer2025-202610090241.qcow2`、`Win10-202610090330.qcow2`、`Win11-202610090330.qcow2`。
-时间使用生成配置时构建主机的本地时间，精确到分钟；也可以在向导中自行填写输出路径。
+默认输出文件名为 `系统简称-yyyyMMddHHmm.qcow2`，例如 `WinServer2025-202610090241.qcow2`，也可以在向导中自行填写输出路径。
 命令行运行 `New-ImageConfig.ps1` 时，省略 `-OutputPath` 也会按所选 Windows 版本使用此命名规则。
 
 按回车可使用当前步骤的默认值。
@@ -139,15 +136,13 @@ Set-Location windows-imaging-tools-builder
 IPv6 地址包含端口时，使用 `[地址]:端口` 格式。
 选择第二项后，直接按回车可留空，项目不会设置 KMS 地址。
 
-项目将 KMS 地址保存到本次配置的资源中。
-构建阶段只在虚拟机内设置 KMS 地址，不会请求激活。
-部署后首次启动时，Cloudbase-Init 会重新设置 KMS 地址。
-随后，Cloudbase-Init 会尝试一次 Windows KMS 激活。
-如果未配置 KMS 地址或未安装 Windows KMS 客户端安装密钥，项目不会请求激活。
+构建期间不会请求激活。
+部署后首次启动时，系统会使用所选 KMS 地址尝试一次 Windows KMS 激活。
+只有配置了 KMS 地址并安装 Windows KMS 客户端安装密钥时，才会尝试激活。
 
 项目将激活结果保存到 `C:\ProgramData\PveImageBuilder\windows-activation.json`。
 未联网、KMS 不可达或激活失败都不会阻断 Cloudbase-Init 初始化。
-激活脚本不会要求重启。
+激活过程不会要求重启。
 
 通过命令行生成配置时，使用 `New-ImageConfig.ps1 -KmsServer 'kms.example.com:1688'` 指定 KMS 地址。
 传入 `-KmsServer ''` 可将 KMS 地址留空。
@@ -235,7 +230,6 @@ qm set "$VMID" --boot order=scsi0
 
 使用 `import-from` 导入 qcow2 镜像后，系统盘连接到 `scsi0`。
 系统盘使用 VirtIO SCSI 控制器。
-EFI 盘保存 UEFI 变量。
 设置 `pre-enrolled-keys=1` 后，EFI 盘包含预置密钥并启用 Secure Boot。
 TPM 状态盘提供 TPM 2.0。
 `--agent enabled=1` 启用 PVE 与 QEMU Guest Agent 的通信。
@@ -259,8 +253,7 @@ qm cloudinit update "$VMID"
 qm config "$VMID"
 ```
 
-`configdrive2` 为 Cloudbase-Init 提供 ConfigDrive 数据。
-Cloudbase-Init 从配置盘读取账号密码和网络设置。
+`citype` 应设为 `configdrive2`，以便 Cloudbase-Init 从配置盘读取账号密码和网络设置。
 `ipconfig0` 对应 `net0`。
 上述配置使用 DHCP。
 使用 DHCP 时，目标网络必须提供 DHCP 服务。
@@ -337,8 +330,8 @@ qm start "$NEW_VMID"
 初始化期间，虚拟机可能因计算机名变更而自动重启。
 初始化完成后，使用 `Administrator` 和设置的密码，通过 PVE 控制台或 RDP 登录。
 
-项目的账号插件会验证注入的密码。
-密码验证成功后，插件会禁用额外的 `Admin` 账号。
+首次初始化会验证设置的密码。
+密码验证成功后，额外的 `Admin` 账号会被禁用。
 账号处理规则见[账号配置](docs/account-bootstrap.md)。
 
 PVE 命令说明见 [qm 手册](https://pve.proxmox.com/pve-docs/qm.1.html)。
