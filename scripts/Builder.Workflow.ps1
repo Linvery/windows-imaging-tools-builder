@@ -23,13 +23,49 @@ function Get-BuilderDownloadLinks {
     }
 }
 function Show-BuilderPreparationGuide {
-    $links=Get-BuilderDownloadLinks
     Write-Host '开始前请准备以下资源：' -ForegroundColor Cyan
+    $resources=@(
+        [PSCustomObject]@{'资源'='Windows 安装 ISO';'示例文件名'='Win11_25H2_Chinese_Simplified_x64.iso';'应存放路径'='data\iso\'}
+        [PSCustomObject]@{'资源'='VirtIO ISO';'示例文件名'='virtio-win.iso';'应存放路径'='data\iso\'}
+        [PSCustomObject]@{'资源'='Chrome Enterprise x64 MSI';'示例文件名'='googlechromestandaloneenterprise64.msi';'应存放路径'='data\custom-resources\'}
+        [PSCustomObject]@{'资源'='VS Code x64 系统安装包';'示例文件名'='VSCodeSetup-x64-1.105.0.exe';'应存放路径'='data\custom-resources\'}
+    )
+    # 按终端显示宽度补空格，避免 PowerShell 5.1 的 Format-Table 将中英文列排错位。
+    $displayWidth = {
+        param([string]$Text)
+        return ($Text -replace '[\u1100-\u115F\u2329\u232A\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF01-\uFF60\uFFE0-\uFFE6]', '  ').Length
+    }
+    $columns=@('资源','示例文件名','应存放路径')
+    $widths=@{}
+    foreach ($column in $columns) {
+        $widths[$column]=& $displayWidth $column
+        foreach ($resource in $resources) {
+            $widths[$column]=[Math]::Max($widths[$column], (& $displayWidth $resource.$column))
+        }
+    }
+    $formatRow = {
+        param([string[]]$Cells)
+        $padded=for ($index=0; $index -lt $columns.Count; $index++) {
+            $cell=$Cells[$index]
+            $cell + (' ' * ($widths[$columns[$index]] - (& $displayWidth $cell)))
+        }
+        return '│ ' + ($padded -join ' │ ') + ' │'
+    }
+    $segments=@($columns | ForEach-Object { '─' * ($widths[$_] + 2) })
+    Write-Host ''
+    Write-Host ('┌' + ($segments -join '┬') + '┐')
+    Write-Host (& $formatRow -Cells $columns) -ForegroundColor Cyan
+    Write-Host ('├' + ($segments -join '┼') + '┤')
+    for ($index=0; $index -lt $resources.Count; $index++) {
+        $resource=$resources[$index]
+        $cells=@($columns | ForEach-Object { [string]$resource.$_ })
+        Write-Host (& $formatRow -Cells $cells)
+        if ($index -lt $resources.Count - 1) { Write-Host ('├' + ($segments -join '┼') + '┤') }
+    }
+    Write-Host ('└' + ($segments -join '┴') + '┘')
+    Write-Host ''
     Write-Host ('Windows ISO 或 WIM 放入 '+(Join-Path $ProjectRoot 'data\iso')+'，向导会列出文件供编号选择；也可手动指定路径。')
-    Write-Host ('Windows ISO 下载：'+$links.WindowsIso)
-    Write-Host ('VirtIO ISO 也放入 data\iso，guest-tools 会自动从 ISO 提取。最新下载：'+$links.VirtioIso)
-    Write-Host ('Chrome 和 VS Code 可选；安装包放入 data\custom-resources。Chrome x64 MSI：'+$links.Chrome)
-    Write-Host ('VS Code x64 系统安装包：'+$links.VSCode)
+    Write-Host 'VirtIO guest-tools 会自动从 ISO 提取。Chrome 和 VS Code 可选。'
     Write-Host 'Chrome、VS Code 验证有效厂商签名，不限制版本，下载后无需改名；VirtIO 只检查 guest-tools 文件名。'
     Write-Host '没有 Hyper-V 外部交换机时会询问是否创建。回车使用默认值，输入 Q 取消。'
     Write-Host ''
