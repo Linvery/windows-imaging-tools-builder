@@ -1,6 +1,6 @@
 # Windows Imaging Tools Builder
 
-本项目通过中文 PowerShell 向导构建 Windows 11 qcow2 镜像，供 Proxmox VE（PVE）使用。
+本项目通过PowerShell 向导构建包含 VirtIO 与 Cloudbase 的 Windows qcow2 镜像，供 Proxmox VE（PVE）使用。
 项目基于 [windows-imaging-tools](https://github.com/cloudbase/windows-imaging-tools)。
 
 ## 准备环境
